@@ -1,13 +1,14 @@
-require("@babel/register"); // eslint-disable-line
-const lighthouse = require("lighthouse"); // eslint-disable-line
-const analyze = require("./analyze").default; //eslint-disable-line
-const compare = require("./compare").default; //eslint-disable-line
-const PERF_METRICS = require("./metrics").PERF_METRICS; //eslint-disable-line
-const { URL } = require("url"); //eslint-disable-line
-const launchPuppeteer = require("./launch").default; //eslint-disable-line
+import lighthouse from 'lighthouse';
+import analyze from  "./analyze.mjs";
+import compare from "./compare.mjs";
+import { PERF_METRICS }  from "./metrics.mjs";
+import { URL } from 'url';
+import launchPuppeteer from "./launch.mjs";
+import { join } from 'path'
 
 function getConfig(arg) {
-  return require(`../config/${arg[2]}`); //eslint-disable-line
+    
+  return import(join(`../config/${arg[0]}`)); //eslint-disable-line
 }
 
 async function startLighthouse(url, label) {
@@ -48,34 +49,42 @@ async function lighthouseRunner(urls, label, abtest) {
         console.log(compared);
     }
 
-    return totals;
-}
-
-async function runAll(suites) {
-    for (const suite of suites) {
-        await lighthouseRunner(suite.urls, suite.label);
+    return {
+        totals,
+        analyzed
     }
 }
 
-async function run(suite, abtest) {
-    await lighthouseRunner(suite.urls, suite.label, abtest);
+async function runAll(suites) {
+    const results = [];
+
+    for (const suite of suites) {
+        const result = await lighthouseRunner(suite.urls, suite.label);
+        results.push(result);
+    }
+
+    return results;
 }
 
-function runLighthouse(argv) {
-    const args = argv || process.argv;
+async function run(suite, abtest) {
+    const result = await lighthouseRunner(suite.urls, suite.label, abtest);
+    return result;
+}
+
+export default function runLighthouse(args) {
     let benchmark;
     let url;
-    if (args.length >= 3 && args.length !== 4) {
-        if (args[2].includes('http')) {
-            url = args[2];
+    if (args.length >= 1 && args.length !== 2) {
+        if (args[0].includes('http')) {
+            url = args[0];
             let suite = {};
             let abtest;
-            if (args[4]) {
+            if (args[2]) {
                 // a/b test mode
                 abtest = true;
-                benchmark = parseInt(args[4], 10);
-                const aurls = new Array(benchmark).fill(args[2]);
-                const burls = new Array(benchmark).fill(args[3]);
+                benchmark = parseInt(args[2], 10);
+                const aurls = new Array(benchmark).fill(args[0]);
+                const burls = new Array(benchmark).fill(args[1]);
                 suite = {
                     label: 'benchmark',
                     urls: aurls.concat(burls)
@@ -87,26 +96,24 @@ function runLighthouse(argv) {
                     urls: [url]
                 };
             }
-            run(suite, abtest);
+            return run(suite, abtest);
         } else {
-            runAll(getConfig(args)); // complete list
+            return runAll(getConfig(args)); // complete list
         }
-    } else if (args.length === 4) {
+    } else if (args.length === 2) {
         // benchmark or subset
-        benchmark = args[3] && parseInt(args[3], 10);
-        if (benchmark && args[2] && args[2].includes('http')) {
+        benchmark = args[1] && parseInt(args[1], 10);
+        if (benchmark && args[0] && args[0].includes('http')) {
             // benchmark
-            url = args[2];
+            url = args[0];
             const suite = {
                 label: 'benchmark',
                 urls: new Array(benchmark).fill(url)
             };
-            run(suite);
+            return run(suite);
         } else {
             // subset of urls
-            run(getConfig(args).filter(p => p.label === args[3])[0], false);
+            return run(getConfig(args).filter(p => p.label === args[1])[0], false);
         }
     }
 }
-
-runLighthouse();

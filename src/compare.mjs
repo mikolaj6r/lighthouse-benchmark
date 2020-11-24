@@ -1,4 +1,4 @@
-const PERF_METRICS = require('./metrics').PERF_METRICS;
+import { PERF_METRICS }  from "./metrics.mjs";
 
 export default function compare(res) {
     const compared = {};

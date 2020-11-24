@@ -3,8 +3,9 @@
   "version": "0.0.3",
   "description": "Tool for running lighthouse audits in bulk, identifying significant results across individual metrics",
   "main": "src/index.js",
+  "type": "module",
   "bin": {
-    "lb": "./src/run-lighthouse.js"
+    "lb": "./bin/index.mjs"
   },
   "scripts": {
     "test": "mocha",
