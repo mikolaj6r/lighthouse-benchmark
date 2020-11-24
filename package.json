@@ -2,7 +2,7 @@
   "name": "lighthouse-benchmark",
   "version": "0.0.3",
   "description": "Tool for running lighthouse audits in bulk, identifying significant results across individual metrics",
-  "main": "src/index.js",
+  "main": "src/index.mjs",
   "type": "module",
   "bin": {
     "lb": "./bin/index.mjs"

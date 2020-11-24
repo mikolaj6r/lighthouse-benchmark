@@ -8,7 +8,7 @@ import { join } from 'path'
 
 function getConfig(arg) {
     
-  return import(join(`../config/${arg[0]}`)); //eslint-disable-line
+  return import(join(`../config/${arg[0]}`)).default; //eslint-disable-line
 }
 
 async function startLighthouse(url, label) {
@@ -30,7 +30,7 @@ async function startLighthouse(url, label) {
         url: lhr.requestedUrl,
         label
     };
-    console.log(metrics);
+    //console.log(metrics);
     browser.close();
     return metrics;
 }
@@ -43,13 +43,14 @@ async function lighthouseRunner(urls, label, abtest) {
         totals.push(metrics);
     }
     const analyzed = await analyze(totals);
-    console.log(analyzed);
+    //console.log(analyzed);
     if (abtest) {
         const compared = await compare(analyzed);
-        console.log(compared);
+        //console.log(compared);
     }
 
     return {
+        label,
         totals,
         analyzed
     }
@@ -98,7 +99,8 @@ export default function runLighthouse(args) {
             }
             return run(suite, abtest);
         } else {
-            return runAll(getConfig(args)); // complete list
+            if(typeof args[0] == 'string') return runAll(getConfig(args))
+            else if(Array.isArray(args[0])) return runAll(args[0]);
         }
     } else if (args.length === 2) {
         // benchmark or subset
